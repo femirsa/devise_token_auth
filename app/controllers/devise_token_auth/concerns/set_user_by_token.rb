@@ -46,6 +46,40 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     end
   end
 
+   # user auth
+  def set_user_by_external_token(mapping=nil)
+
+    # determine target authentication class
+    rc = resource_class(mapping)
+
+    # no default user defined
+    return unless rc
+
+    # user has already been found and authenticated
+    return @resource if @resource and @resource.class == rc
+
+    # parse header for values necessary for authentication
+    uid        = request.headers['uid']
+    @token     = request.headers['access-token']
+    @client_id = request.headers['client']
+
+    return false unless @token
+
+    # client_id isn't required, set to 'default' if absent
+    @client_id ||= 'default'
+
+    # mitigate timing attacks by finding by uid instead of auth token
+    user = uid && rc.find_by_uid(uid)
+
+    if user && user.valid_external_token?(@token, @client_id)
+      #sign_in(:user, user, store: false, bypass: true)
+      return @resource = user
+    else
+      # zero all values previously set values
+      return @resource = nil
+    end
+  end
+
 
   def update_auth_header
 

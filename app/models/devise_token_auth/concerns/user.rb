@@ -86,6 +86,17 @@ module DeviseTokenAuth::Concerns::User
     return false
   end
 
+   def valid_external_token?(token, client_id='default')
+    client_id ||= 'default'
+
+    return false unless self.tokens[client_id]
+
+    return true if external_token_is_current?(token, client_id)
+
+    # return false if none of the above conditions are met
+    return false
+  end
+
 
   # this must be done from the controller so that additional params
   # can be passed on from the client
@@ -105,6 +116,20 @@ module DeviseTokenAuth::Concerns::User
 
       # ensure that the token is valid
       BCrypt::Password.new(self.tokens[client_id]['token']) == token
+    )
+  end
+
+  def external_token_is_current?(token, client_id)
+    return true if (
+      # ensure that expiry and token are set
+      self.tokens[client_id]['expiry'] and
+      self.tokens[client_id]['external_token'] and
+
+      # ensure that the token has not yet expired
+      DateTime.strptime(self.tokens[client_id]['expiry'].to_s, '%s') > Time.now and
+
+      # ensure that the token is valid
+      BCrypt::Password.new(self.tokens[client_id]['external_token']) == token
     )
   end
 
