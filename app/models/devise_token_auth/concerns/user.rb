@@ -90,7 +90,7 @@ module DeviseTokenAuth::Concerns::User
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-
+    puts "ENTTREEE 222"
     return true if external_token_is_current?(token, client_id)
 
     # return false if none of the above conditions are met
@@ -120,6 +120,8 @@ module DeviseTokenAuth::Concerns::User
   end
 
   def external_token_is_current?(token, client_id)
+    puts "external_token_is_current"
+    puts "#{self.tokens[client_id]['external_token']}"
     return true if (
       # ensure that expiry and token are set
       self.tokens[client_id]['expiry'] and
