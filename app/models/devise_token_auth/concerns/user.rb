@@ -91,7 +91,7 @@ module DeviseTokenAuth::Concerns::User
 
     return false unless self.tokens[client_id]
     puts "ENTTREEE 222"
-    return true if external_token_is_current?(token, client_id)
+    return true if externaltoken_is_current?(token, client_id)
 
     # return false if none of the above conditions are met
     return false
@@ -104,22 +104,7 @@ module DeviseTokenAuth::Concerns::User
     false
   end
 
-
-  def token_is_current?(token, client_id)
-    return true if (
-      # ensure that expiry and token are set
-      self.tokens[client_id]['expiry'] and
-      self.tokens[client_id]['token'] and
-
-      # ensure that the token has not yet expired
-      DateTime.strptime(self.tokens[client_id]['expiry'].to_s, '%s') > Time.now and
-
-      # ensure that the token is valid
-      BCrypt::Password.new(self.tokens[client_id]['token']) == token
-    )
-  end
-
-  def external_token_is_current?(token, client_id)
+   def externaltoken_is_current?(token, client_id)
     puts "external_token_is_current"
     puts "#{self.tokens[client_id]['external_token']}"
     return true if (
@@ -134,6 +119,22 @@ module DeviseTokenAuth::Concerns::User
       BCrypt::Password.new(self.tokens[client_id]['external_token']) == token
     )
   end
+  
+  def token_is_current?(token, client_id)
+    return true if (
+      # ensure that expiry and token are set
+      self.tokens[client_id]['expiry'] and
+      self.tokens[client_id]['token'] and
+
+      # ensure that the token has not yet expired
+      DateTime.strptime(self.tokens[client_id]['expiry'].to_s, '%s') > Time.now and
+
+      # ensure that the token is valid
+      BCrypt::Password.new(self.tokens[client_id]['token']) == token
+    )
+  end
+
+ 
 
 
   # allow batch requests to use the previous token
