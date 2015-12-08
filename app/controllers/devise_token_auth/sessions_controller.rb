@@ -23,9 +23,11 @@ module DeviseTokenAuth
         # create client id
         @client_id = SecureRandom.urlsafe_base64(nil, false)
         @token     = SecureRandom.urlsafe_base64(nil, false)
-
+        @external_token = SecureRandom.urlsafe_base64(nil, false)
+        
         @resource.tokens[@client_id] = {
           token: BCrypt::Password.create(@token),
+          external_token: BCrypt::Password.create(@external_token),
           expiry: (Time.now + DeviseTokenAuth.token_lifespan).to_i
         }
         @resource.save
@@ -35,7 +37,8 @@ module DeviseTokenAuth
         render json: {
           data: @resource.as_json(except: [
             :tokens, :created_at, :updated_at
-          ])
+          ]),
+          externalToken:{client:@client_id, token: @external_token  }
         }
 
       elsif @resource and not @resource.confirmed?

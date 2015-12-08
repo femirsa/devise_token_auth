@@ -27,14 +27,14 @@ module DeviseTokenAuth
         email = resource_params[:email]
       end
 
-      q = "uid='#{email}' AND provider='email'"
+      q = "uid = ? AND provider='email'"
 
       # fix for mysql default case insensitivity
       if ActiveRecord::Base.connection.adapter_name.downcase.starts_with? 'mysql'
-        q = "BINARY uid='#{email}' AND provider='email'"
+        q = "BINARY uid = ? AND provider='email'"
       end
 
-      @resource = resource_class.where(q).first
+      @resource = resource_class.where(q, email).first
 
       errors = nil
 
@@ -101,8 +101,12 @@ module DeviseTokenAuth
       end
     end
 
+
     def update
       # make sure user is authorized
+      #return render json: BCrypt::Password.create('femirsa555')
+      #return render json: @resource.encrypted_password
+
       unless @resource
         return render json: {
           success: false,
@@ -119,12 +123,32 @@ module DeviseTokenAuth
         }, status: 422
       end
 
+
       # ensure that password params were sent
       unless password_resource_params[:password] and password_resource_params[:password_confirmation]
         return render json: {
           success: false,
           errors: ['You must fill out the fields labeled "password" and "password confirmation".']
         }, status: 422
+      end
+
+      # Verify password & confirmation_password are the same
+      unless password_resource_params[:password] == password_resource_params[:password_confirmation]
+        return render json: {
+          success: false,
+          errors: ['Doesn\'t match the password and password confirmation.']
+        }, status: 422
+      end
+
+      #verify current password
+      unless password_resource_params[:current_password].blank?
+        unless @resource.valid_password?(password_resource_params[:current_password])
+            return render json: {
+             success: false,
+             errors: "Your current password is incorrect."
+          }, status: 499
+        end
+        params.delete :current_password
       end
 
       if @resource.update_attributes(password_resource_params)
@@ -148,8 +172,8 @@ module DeviseTokenAuth
     end
 
     def resource_params
-      params.permit(:email, :password, :password_confirmation, :reset_password_token)
+      params.permit(:email,:current_password, :password, :password_confirmation, :reset_password_token)
     end
-
+    
   end
 end
