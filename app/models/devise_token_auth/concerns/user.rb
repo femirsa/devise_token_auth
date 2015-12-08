@@ -78,7 +78,6 @@ module DeviseTokenAuth::Concerns::User
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-    puts "valid_token"
     return true if token_is_current?(token, client_id)
     return true if token_can_be_reused?(token, client_id)
 
@@ -90,7 +89,6 @@ module DeviseTokenAuth::Concerns::User
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-    puts "valid_external_token"
     return true if externaltoken_is_current?(token, client_id)
 
     # return false if none of the above conditions are met
@@ -105,8 +103,6 @@ module DeviseTokenAuth::Concerns::User
   end
 
    def externaltoken_is_current?(token, client_id)
-    puts "external_token_is_current"
-    puts "#{self.tokens[client_id]['external_token']}"
     return true if (
       # ensure that expiry and token are set
       self.tokens[client_id]['expiry'] and
@@ -119,7 +115,7 @@ module DeviseTokenAuth::Concerns::User
       BCrypt::Password.new(self.tokens[client_id]['external_token']) == token
     )
   end
-  
+
   def token_is_current?(token, client_id)
     return true if (
       # ensure that expiry and token are set

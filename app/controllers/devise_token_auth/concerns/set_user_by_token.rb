@@ -48,7 +48,6 @@ module DeviseTokenAuth::Concerns::SetUserByToken
 
    # user auth
   def set_user_by_external_token(mapping=nil)
-    puts "set_user_by_external_token"
     # determine target authentication class
     rc = resource_class(mapping)
 
