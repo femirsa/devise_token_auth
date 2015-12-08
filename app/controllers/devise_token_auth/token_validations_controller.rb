@@ -1,6 +1,6 @@
 module DeviseTokenAuth
   class TokenValidationsController < DeviseTokenAuth::ApplicationController
-    skip_before_filter :assert_is_devise_resource!, :only => [:validate_token]
+    skip_before_filter :assert_is_devise_resource!, :only => [:validate_token,:validate_external_token]
     before_filter :set_user_by_token, :only => [:validate_token]
     before_filter :set_user_by_external_token, :only => [:validate_external_token]
 
