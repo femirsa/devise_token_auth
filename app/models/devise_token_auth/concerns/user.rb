@@ -78,7 +78,7 @@ module DeviseTokenAuth::Concerns::User
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-
+    puts "valid_token"
     return true if token_is_current?(token, client_id)
     return true if token_can_be_reused?(token, client_id)
 
@@ -90,7 +90,7 @@ module DeviseTokenAuth::Concerns::User
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-    puts "ENTTREEE 222"
+    puts "valid_external_token"
     return true if externaltoken_is_current?(token, client_id)
 
     # return false if none of the above conditions are met
