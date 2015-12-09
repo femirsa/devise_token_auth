@@ -35,11 +35,12 @@ module DeviseTokenAuth
         sign_in(:user, @resource, store: false, bypass: false)
 
         render json: {
-          data: @resource.as_json(except: [
+          data:{ user: @resource.as_json(except: [
             :tokens, :created_at, :updated_at
           ]),
-          externalToken:{client:@client_id, token: @external_token  }
-        }
+          external_token:{client:@client_id, token: @external_token  }
+        }}
+        
 
       elsif @resource and not @resource.confirmed?
         render json: {

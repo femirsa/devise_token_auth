@@ -104,7 +104,6 @@ module DeviseTokenAuth
 
     def update
       # make sure user is authorized
-      #return render json: BCrypt::Password.create('femirsa555')
       #return render json: @resource.encrypted_password
 
       unless @resource
