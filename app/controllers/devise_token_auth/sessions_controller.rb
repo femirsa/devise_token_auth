@@ -33,16 +33,36 @@ module DeviseTokenAuth
         @resource.save
 
         sign_in(:user, @resource, store: false, bypass: false)
-     #   puts "#{@resource.class}"
+     #   puts "SAAAAAAA #{@resource.class}"
      #   puts "OKOKOKO11111 #{@resource.sign_in_count}"
      #   puts "OKOKOKO #{@resource.as_json(only: [:sign_in_count])}"
      #   puts "OKOKOKO-TODO #{@resource.as_json}"
      #   serializer_options = {}
      #   serializer = UserAgentSerializer.new(@resource, serializer_options)
      #   puts "#{serializer.as_json}"
-
-        render json:  @resource
-        
+     if @resource.class.to_s == 'Agent'
+        render json: {
+          data: @resource.as_json(only: [
+            :id,
+            :email,
+            :provider,
+            :uid,
+            :agency_id,
+            :name,
+            :last_name,
+            :is_owner,
+            :avatar_file_name,
+            :avatar_content_type,
+            :telephone,
+            :sign_in_count],include: [:agency])
+        }
+      else
+        render json: {
+          data: @resource.as_json(except: [
+            :tokens, :created_at, :updated_at
+          ])
+        }
+     end
 
       elsif @resource and not @resource.confirmed?
         render json: {
