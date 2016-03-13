@@ -103,15 +103,18 @@ module DeviseTokenAuth
       remove_instance_variable(:@token) if @token
 
       if user and client_id and user.tokens[client_id]
-        LoginBitacoraAgent.create(
-        :agency_id => user.agency_id,
-        :profile_id => user.profile_id,
-        :agent_id =>user.id,
-        :email =>user.email,
-        :is_owner =>user.is_owner,
-        :sign_in_ip =>user.current_sign_in_ip,
-        :action_type =>LoginBitacoraAgent.action_types[:sign_out]
-        )
+
+        if user.class.to_s == 'Agent'
+          LoginBitacoraAgent.create(
+          :agency_id => user.agency_id,
+          :profile_id => user.profile_id,
+          :agent_id =>user.id,
+          :email =>user.email,
+          :is_owner =>user.is_owner,
+          :sign_in_ip =>user.current_sign_in_ip,
+          :action_type =>LoginBitacoraAgent.action_types[:sign_out]
+          )
+        end
         user.tokens.delete(client_id)
         user.save!
 
