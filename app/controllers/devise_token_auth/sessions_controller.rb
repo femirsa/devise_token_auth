@@ -41,34 +41,42 @@ module DeviseTokenAuth
      #   serializer = UserAgentSerializer.new(@resource, serializer_options)
      #   puts "#{serializer.as_json}"
      if @resource.class.to_s == 'Agent'
-        render json: {
-          data: @resource.as_json(only: [
-            :id,
-            :email,
-            :provider,
-            :uid,
-            :agency_id,
-            :name,
-            :last_name,
-            :is_owner,
-            :avatar_file_name,
-            :avatar_content_type,
-            :telephone,
-            :sign_in_count],include: {agency: {  
-                                                except:[:sabre_ipcc,:sabre_password,:sabre_username]},
-                                      profile:{ 
-                                                include: { functionalities:{} 
-                                                }  
-                                              } 
-                                      })
-        }
-      else
-        render json: {
-          data: @resource.as_json(except: [
-            :tokens, :created_at, :updated_at
+      LoginBitacoraAgent.create(
+        :agency_id => @resource.agency_id,
+        :profile_id => @resource.profile_id,
+        :agent_id =>@resource.id,
+        :email =>@resource.email,
+        :is_owner =>@resource.is_owner,
+        :sign_in_ip =>@resource.current_sign_in_ip
+        )
+      render json: {
+        data: @resource.as_json(only: [
+          :id,
+          :email,
+          :provider,
+          :uid,
+          :agency_id,
+          :name,
+          :last_name,
+          :is_owner,
+          :avatar_file_name,
+          :avatar_content_type,
+          :telephone,
+          :sign_in_count],include: {agency: {  
+            except:[:sabre_ipcc,:sabre_password,:sabre_username]},
+            profile:{ 
+              include: { functionalities:{} 
+            }  
+          } 
+          })
+      }
+    else
+      render json: {
+        data: @resource.as_json(except: [
+          :tokens, :created_at, :updated_at
           ])
-        }
-     end
+      }
+    end
 
       elsif @resource and not @resource.confirmed?
         render json: {
