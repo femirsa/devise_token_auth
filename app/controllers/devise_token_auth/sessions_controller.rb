@@ -68,8 +68,8 @@ module DeviseTokenAuth
             profile:{ 
               include: { functionalities:{} 
             }  
-          } 
-          })
+          }
+          }).merge("external_token" => {client:@client_id, token: @external_token  })
       }
     else
       render json: {
