@@ -10,15 +10,16 @@ module DeviseTokenAuth
       else
         email = resource_params[:email]
       end
+      provider=resource_params[:provider]
 
-      q = "uid='#{email}' AND provider='email'"
+      q = provider == "email" ? "uid='#{email}' AND provider='#{provider}'" : "uid='#{provider}@#{email}' AND provider='#{provider}'"
 
       if ActiveRecord::Base.connection.adapter_name.downcase.starts_with? 'mysql'
-        q = "BINARY uid='#{email}' AND provider='email'"
+        q = provider == "email" ? "BINARY uid='#{email}' AND provider='#{provider}'" : "BINARY uid='#{provider}@#{email}' AND provider='#{provider}'"
       end
-
+      
       @resource = resource_class.where(q).first
-
+      
       if @resource and valid_params? and @resource.valid_password?(resource_params[:password]) and @resource.confirmed?
         # create client id
         @client_id = SecureRandom.urlsafe_base64(nil, false)
@@ -33,13 +34,6 @@ module DeviseTokenAuth
         @resource.save
 
         sign_in(:user, @resource, store: false, bypass: false)
-     #   puts "SAAAAAAA #{@resource.class}"
-     #   puts "OKOKOKO11111 #{@resource.sign_in_count}"
-     #   puts "OKOKOKO #{@resource.as_json(only: [:sign_in_count])}"
-     #   puts "OKOKOKO-TODO #{@resource.as_json}"
-     #   serializer_options = {}
-     #   serializer = UserAgentSerializer.new(@resource, serializer_options)
-     #   puts "#{serializer.as_json}"
      if @resource.class.to_s == 'Agent'
       LoginBitacoraAgent.create(
         :agency_id => @resource.agency_id,
