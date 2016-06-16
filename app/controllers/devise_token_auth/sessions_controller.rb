@@ -57,6 +57,7 @@ module DeviseTokenAuth
           :avatar_file_name,
           :avatar_content_type,
           :telephone,
+          :admin_license,
           :sign_in_count],include: {agency: {  
             except:[:sabre_ipcc,:sabre_password,:sabre_username]},
             profile:{ 
