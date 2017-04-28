@@ -34,9 +34,14 @@ group :development, :test do
   gem 'guard-minitest'
   gem 'faker'
   gem 'fuzz_ball'
+  gem 'mocha'
 end
 
 # code coverage, metrics
 group :test do
   gem "codeclimate-test-reporter", require: nil
+end
+
+group :development do
+  gem "github_changelog_generator"
 end

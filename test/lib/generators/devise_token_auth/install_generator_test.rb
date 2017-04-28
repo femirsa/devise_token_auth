@@ -28,6 +28,10 @@ module DeviseTokenAuth
         assert_migration 'db/migrate/devise_token_auth_create_users.rb'
       end
 
+      test 'migration file contains rails version' do
+        assert_migration 'db/migrate/devise_token_auth_create_users.rb', /#{Rails::VERSION::MAJOR}.#{Rails::VERSION::MINOR}/
+      end
+
       test 'subsequent runs raise no errors' do
         run_generator
       end
@@ -44,14 +48,17 @@ module DeviseTokenAuth
         # make dir if not exists
         FileUtils.mkdir_p(@dir)
 
+        # account for rails version 5
+        active_record_needle = (Rails::VERSION::MAJOR == 5) ? 'ApplicationRecord' : 'ActiveRecord::Base'
+
         @f = File.open(@fname, 'w') {|f|
           f.write <<-RUBY
-class User < ActiveRecord::Base
+            class User < #{active_record_needle}
 
-  def whatever
-    puts 'whatever'
-  end
-end
+              def whatever
+                puts 'whatever'
+              end
+            end
           RUBY
         }
 
@@ -87,9 +94,9 @@ end
 
         @f = File.open(@fname, 'w') {|f|
           f.write <<-RUBY
-Rails.application.routes.draw do
-  patch '/chong', to: 'bong#index'
-end
+            Rails.application.routes.draw do
+              patch '/chong', to: 'bong#index'
+            end
           RUBY
         }
 
@@ -98,21 +105,21 @@ end
 
       test 'route method is appended to routes file' do
         assert_file 'config/routes.rb' do |routes|
-          assert_match(/mount_devise_token_auth_for 'User', at: '\/auth'/, routes)
+          assert_match(/mount_devise_token_auth_for 'User', at: 'auth'/, routes)
         end
       end
 
       test 'subsequent runs do not modify file' do
         run_generator
         assert_file 'config/routes.rb' do |routes|
-          matches = routes.scan(/mount_devise_token_auth_for 'User', at: '\/auth'/m).size
+          matches = routes.scan(/mount_devise_token_auth_for 'User', at: 'auth'/m).size
           assert_equal 1, matches
         end
       end
 
       describe 'subsequent models' do
         before do
-          run_generator %w(Mang /mangs)
+          run_generator %w(Mang mangs)
         end
 
         test 'migration is created' do
@@ -121,7 +128,7 @@ end
 
         test 'route method is appended to routes file' do
           assert_file 'config/routes.rb' do |routes|
-            assert_match(/mount_devise_token_auth_for 'Mang', at: '\/mangs'/, routes)
+            assert_match(/mount_devise_token_auth_for 'Mang', at: 'mangs'/, routes)
           end
         end
 
@@ -147,13 +154,11 @@ end
 
         @f = File.open(@fname, 'w') {|f|
           f.write <<-RUBY
-class ApplicationController < ActionController::Base
-  respond_to :json
-
-  def whatever
-    'whatever'
-  end
-end
+            class ApplicationController < ActionController::Base
+              def whatever
+                'whatever'
+              end
+            end
           RUBY
         }
 
