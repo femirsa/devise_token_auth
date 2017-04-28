@@ -1,13 +1,11 @@
-require "codeclimate-test-reporter"
-#require 'simplecov'
+require 'simplecov'
 
 #SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
   #SimpleCov::Formatter::HTMLFormatter,
   #CodeClimate::TestReporter::Formatter
 #]
 
-#SimpleCov.start 'rails'
-CodeClimate::TestReporter.start
+SimpleCov.start 'rails'
 
 ENV["RAILS_ENV"] = "test"
 
@@ -40,18 +38,22 @@ class ActiveSupport::TestCase
   # Add more helper methods to be used by all tests here...
 
   def age_token(user, client_id)
-    user.tokens[client_id]['updated_at'] = Time.now - (DeviseTokenAuth.batch_request_buffer_throttle + 10.seconds)
-    user.save!
+    if user.tokens[client_id]
+      user.tokens[client_id]['updated_at'] = Time.now - (DeviseTokenAuth.batch_request_buffer_throttle + 10.seconds)
+      user.save!
+    end
   end
 
   def expire_token(user, client_id)
-    user.tokens[client_id]['expiry'] = (Time.now - (DeviseTokenAuth.token_lifespan.to_f + 10.seconds)).to_i
-    user.save!
+    if user.tokens[client_id]
+      user.tokens[client_id]['expiry'] = (Time.now - (DeviseTokenAuth.token_lifespan.to_f + 10.seconds)).to_i
+      user.save!
+    end
   end
 end
 
 class ActionController::TestCase
-  include Devise::TestHelpers
+  include Devise::Test::ControllerHelpers
 
   setup do
     @routes = Dummy::Application.routes

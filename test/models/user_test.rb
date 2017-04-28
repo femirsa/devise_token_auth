@@ -35,6 +35,28 @@ class UserTest < ActiveSupport::TestCase
       end
     end
 
+    describe 'email uniqueness' do
+      test 'model should not save if email is taken' do
+        provider = 'email'
+
+        User.create(
+          email: @email,
+          provider: provider,
+          password: @password,
+          password_confirmation: @password
+        )
+
+        @resource.email                 = @email
+        @resource.provider              = provider
+        @resource.password              = @password
+        @resource.password_confirmation = @password
+
+        refute @resource.save
+        assert @resource.errors.messages[:email] == [I18n.t('errors.messages.taken')]
+        assert @resource.errors.messages[:email].none? { |e| e =~ /translation missing/ }
+      end
+    end
+
     describe 'oauth2 authentication' do
       test 'model should save even if email is blank' do
         @resource.provider              = 'facebook'
@@ -79,11 +101,24 @@ class UserTest < ActiveSupport::TestCase
       end
 
       test 'expired token was removed' do
-        refute @resource.tokens[@old_auth_headers['client']]
+        refute @resource.tokens[@old_auth_headers[:client]]
       end
 
       test 'current token was not removed' do
-        assert @resource.tokens[@new_auth_headers['client']]
+        assert @resource.tokens[@new_auth_headers["client"]]
+      end
+    end
+
+    describe 'nil tokens are handled properly' do
+      before do
+        @resource = users(:confirmed_email_user)
+        @resource.skip_confirmation!
+        @resource.save!
+      end
+
+      test 'tokens can be set to nil' do
+        @resource.tokens = nil
+        assert @resource.save
       end
     end
   end
