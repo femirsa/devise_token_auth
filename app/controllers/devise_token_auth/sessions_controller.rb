@@ -127,8 +127,8 @@ module DeviseTokenAuth
 
     protected
 
-    def valid_params?(key, val)
-      resource_params[:password] && key && val
+    def valid_params?
+      resource_params[:password] && resource_params[:email]
     end
 
     def get_auth_params
