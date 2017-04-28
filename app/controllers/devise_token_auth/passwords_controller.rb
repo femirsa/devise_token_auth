@@ -41,12 +41,7 @@ module DeviseTokenAuth
         q = "BINARY uid = ? AND provider='email'"
       end
 
-<<<<<<< HEAD
       @resource = resource_class.where(q, @email).first
-=======
-      @resource = resource_class.where(q, email).first
->>>>>>> a5472fa66fe91ddc3bd0a16729a325db2fd8b9f5
-
       @errors = nil
       @error_status = 400
 
