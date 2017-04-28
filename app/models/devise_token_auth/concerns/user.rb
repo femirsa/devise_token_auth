@@ -112,9 +112,18 @@ module DeviseTokenAuth::Concerns::User
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-
     return true if token_is_current?(token, client_id)
     return true if token_can_be_reused?(token, client_id)
+
+    # return false if none of the above conditions are met
+    return false
+  end
+
+   def valid_external_token?(token, client_id='default')
+    client_id ||= 'default'
+
+    return false unless self.tokens[client_id]
+    return true if externaltoken_is_current?(token, client_id)
 
     # return false if none of the above conditions are met
     return false
@@ -127,6 +136,19 @@ module DeviseTokenAuth::Concerns::User
     false
   end
 
+   def externaltoken_is_current?(token, client_id)
+    return true if (
+      # ensure that expiry and token are set
+      self.tokens[client_id]['expiry'] and
+      self.tokens[client_id]['external_token'] and
+
+      # ensure that the token has not yet expired
+      DateTime.strptime(self.tokens[client_id]['expiry'].to_s, '%s') > Time.now and
+
+      # ensure that the token is valid
+      BCrypt::Password.new(self.tokens[client_id]['external_token']) == token
+    )
+  end
 
   def token_is_current?(token, client_id)
     # ghetto HashWithIndifferentAccess
@@ -144,6 +166,8 @@ module DeviseTokenAuth::Concerns::User
       DeviseTokenAuth::Concerns::User.tokens_match?(token_hash, token)
     )
   end
+
+ 
 
 
   # allow batch requests to use the previous token

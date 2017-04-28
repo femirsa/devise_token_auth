@@ -41,7 +41,11 @@ module DeviseTokenAuth
         q = "BINARY uid = ? AND provider='email'"
       end
 
+<<<<<<< HEAD
       @resource = resource_class.where(q, @email).first
+=======
+      @resource = resource_class.where(q, email).first
+>>>>>>> a5472fa66fe91ddc3bd0a16729a325db2fd8b9f5
 
       @errors = nil
       @error_status = 400
@@ -107,8 +111,11 @@ module DeviseTokenAuth
       end
     end
 
+
     def update
       # make sure user is authorized
+      #return render json: @resource.encrypted_password
+
       unless @resource
         return render_update_error_unauthorized
       end
@@ -118,16 +125,39 @@ module DeviseTokenAuth
         return render_update_error_password_not_required
       end
 
+
       # ensure that password params were sent
       unless password_resource_params[:password] && password_resource_params[:password_confirmation]
         return render_update_error_missing_password
       end
 
-      if @resource.send(resource_update_method, password_resource_params)
-        @resource.allow_password_change = false
+      # Verify password & confirmation_password are the same
+      unless password_resource_params[:password] == password_resource_params[:password_confirmation]
+        return render json: {
+          success: false,
+          errors: ['Doesn\'t match the password and password confirmation.']
+        }, status: 422
+      end
 
-        yield @resource if block_given?
-        return render_update_success
+      #verify current password
+      unless password_resource_params[:current_password].blank?
+        unless @resource.valid_password?(password_resource_params[:current_password])
+            return render json: {
+             success: false,
+             errors: "Your current password is incorrect."
+          }, status: 499
+        end
+        params.delete :current_password
+      end
+
+      if @resource.update_attributes(password_resource_params)
+        return render json: {
+          success: true,
+          data: {
+            user: @resource,
+            message: "Your password has been successfully updated."
+          }
+        }
       else
         return render_update_error
       end
@@ -222,12 +252,12 @@ module DeviseTokenAuth
     private
 
     def resource_params
-      params.permit(:email, :password, :password_confirmation, :current_password, :reset_password_token, :redirect_url, :config)
+      params.permit(:email,:current_password, :password, :password_confirmation, :reset_password_token, :redirect_url, :config)
     end
 
     def password_resource_params
       params.permit(*params_for_resource(:account_update))
     end
-
+    
   end
 end

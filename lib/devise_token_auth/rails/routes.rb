@@ -54,8 +54,8 @@ module ActionDispatch::Routing
 
         devise_scope mapping_name.to_sym do
           # path to verify token validity
-          get "#{full_path}/validate_token", controller: "#{token_validations_ctrl}", action: "validate_token"
-
+          get "validate_token", to: "#{token_validations_ctrl}#validate_token"
+          get "validate_external_token", to: "#{token_validations_ctrl}#validate_external_token"
           # omniauth routes. only define if omniauth is installed and not skipped.
           if defined?(::OmniAuth) && !opts[:skip].include?(:omniauth_callbacks)
             match "#{full_path}/failure",             controller: omniauth_ctrl, action: "omniauth_failure", via: [:get]

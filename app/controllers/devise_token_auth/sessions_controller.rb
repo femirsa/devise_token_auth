@@ -9,46 +9,85 @@ module DeviseTokenAuth
     end
 
     def create
-      # Check
-      field = (resource_params.keys.map(&:to_sym) & resource_class.authentication_keys).first
-
-      @resource = nil
-      if field
-        q_value = resource_params[field]
-
-        if resource_class.case_insensitive_keys.include?(field)
-          q_value.downcase!
-        end
-
-        q = "#{field.to_s} = ? AND provider='email'"
-
-        if ActiveRecord::Base.connection.adapter_name.downcase.starts_with? 'mysql'
-          q = "BINARY " + q
-        end
-
-        @resource = resource_class.where(q, q_value).first
+      # honor devise configuration for case_insensitive_keys
+      if resource_class.case_insensitive_keys.include?(:email)
+        email = resource_params[:email].downcase
+      else
+        email = resource_params[:email]
       end
+      provider=resource_params[:provider]
 
-      if @resource && valid_params?(field, q_value) && (!@resource.respond_to?(:active_for_authentication?) || @resource.active_for_authentication?)
-        valid_password = @resource.valid_password?(resource_params[:password])
-        if (@resource.respond_to?(:valid_for_authentication?) && !@resource.valid_for_authentication? { valid_password }) || !valid_password
-          render_create_error_bad_credentials
-          return
-        end
+      q = provider == "email" ? "uid='#{email}' AND provider='#{provider}'" : "uid='#{provider}@#{email}' AND provider='#{provider}'"
+
+      if ActiveRecord::Base.connection.adapter_name.downcase.starts_with? 'mysql'
+        q = provider == "email" ? "BINARY uid='#{email}' AND provider='#{provider}'" : "BINARY uid='#{provider}@#{email}' AND provider='#{provider}'"
+      end
+      
+      @resource = resource_class.where(q).first
+      
+      if @resource and valid_params? and @resource.valid_password?(resource_params[:password]) and @resource.confirmed?
         # create client id
         @client_id = SecureRandom.urlsafe_base64(nil, false)
         @token     = SecureRandom.urlsafe_base64(nil, false)
-
+        @external_token = SecureRandom.urlsafe_base64(nil, false)
+        
         @resource.tokens[@client_id] = {
           token: BCrypt::Password.create(@token),
+          external_token: BCrypt::Password.create(@external_token),
           expiry: (Time.now + DeviseTokenAuth.token_lifespan).to_i
         }
         @resource.save
 
         sign_in(:user, @resource, store: false, bypass: false)
+        if @resource.class.to_s == 'Agent'
+          LoginBitacoraAgent.create(
+            :agency_id => @resource.agency_id,
+            :profile_id => @resource.profile_id,
+            :agent_id =>@resource.id,
+            :email =>@resource.email,
+            :is_owner =>@resource.is_owner,
+            :sign_in_ip =>@resource.current_sign_in_ip,
+            :action_type =>LoginBitacoraAgent.action_types[:sign_in]
+            )
+          render json: {
+            data: @resource.as_json(only: [
+              :id,
+              :email,
+              :provider,
+              :uid,
+              :agency_id,
+              :name,
+              :last_name,
+              :is_owner,
+              :avatar_file_name,
+              :avatar_content_type,
+              :telephone,
+              :admin_license,
+              :sign_in_count],include: {agency: {  
+                except:[:sabre_ipcc,:sabre_password,:sabre_username]},
+                profile:{ 
+                  include: { functionalities:{} 
+                }  
+              }
+              }).merge("external_token" => {client:@client_id, token: @external_token  })
+          }
+        else
+          render json: {
+            data: @resource.as_json(except: [
+              :tokens, :created_at, :updated_at
+              ])
+          }
+        end
 
-        yield @resource if block_given?
-
+      elsif @resource and not @resource.confirmed?
+        render json: {
+          success: false,
+          errors: [
+            "A confirmation email was sent to your account at #{@resource.email}. "+
+            "You must follow the instructions in the email before your account "+
+            "can be activated"
+          ]
+        }, status: 401
         render_create_success
       elsif @resource && !(!@resource.respond_to?(:active_for_authentication?) || @resource.active_for_authentication?)
         render_create_error_not_confirmed
@@ -63,7 +102,19 @@ module DeviseTokenAuth
       client_id = remove_instance_variable(:@client_id) if @client_id
       remove_instance_variable(:@token) if @token
 
-      if user && client_id && user.tokens[client_id]
+      if user and client_id and user.tokens[client_id]
+
+        if user.class.to_s == 'Agent'
+          LoginBitacoraAgent.create(
+          :agency_id => user.agency_id,
+          :profile_id => user.profile_id,
+          :agent_id =>user.id,
+          :email =>user.email,
+          :is_owner =>user.is_owner,
+          :sign_in_ip =>user.current_sign_in_ip,
+          :action_type =>LoginBitacoraAgent.action_types[:sign_out]
+          )
+        end
         user.tokens.delete(client_id)
         user.save!
 
