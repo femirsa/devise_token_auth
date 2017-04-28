@@ -16,7 +16,6 @@ module DeviseTokenAuth
         email = resource_params[:email]
       end
       provider=resource_params[:provider]
-
       q = provider == "email" ? "uid='#{email}' AND provider='#{provider}'" : "uid='#{provider}@#{email}' AND provider='#{provider}'"
 
       if ActiveRecord::Base.connection.adapter_name.downcase.starts_with? 'mysql'

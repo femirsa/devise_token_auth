@@ -17,7 +17,12 @@ module DeviseTokenAuth
     protected
 
     def params_for_resource(resource)
+      puts "params = #{params}"
+      puts "request.headers = #{request.headers}"
       devise_parameter_sanitizer.instance_values['permitted'][resource].each do |type|
+        puts "params[type.to_s] = #{params[type.to_s]}"
+        puts "type = #{type}"
+        puts "request.headers[type.to_s] = #{request.headers[type.to_s]}"
         params[type.to_s] ||= request.headers[type.to_s] unless request.headers[type.to_s].nil?
       end
       devise_parameter_sanitizer.instance_values['permitted'][resource]
