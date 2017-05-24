@@ -3,7 +3,7 @@ module DeviseTokenAuth
     def show
       @resource = resource_class.confirm_by_token(params[:confirmation_token])
 
-      if @resource and @resource.id
+      if @resource && @resource.id
         # create client id
         client_id  = SecureRandom.urlsafe_base64(nil, false)
         token      = SecureRandom.urlsafe_base64(nil, false)
@@ -16,6 +16,8 @@ module DeviseTokenAuth
         }
 
         @resource.save!
+
+        yield @resource if block_given?
 
         redirect_to(@resource.build_auth_url(params[:redirect_url], {
           token:                        token,
