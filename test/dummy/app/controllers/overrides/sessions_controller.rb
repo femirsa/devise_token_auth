@@ -3,9 +3,9 @@ module Overrides
     OVERRIDE_PROOF = "(^^,)"
 
     def create
-      @resource = resource_class.find_by_email(resource_params[:email])
+      @resource = resource_class.find_by(email: resource_params[:email])
 
-      if @resource and valid_params? and @resource.valid_password?(resource_params[:password]) and @resource.confirmed?
+      if @resource and valid_params?(:email, resource_params[:email]) and @resource.valid_password?(resource_params[:password]) and @resource.confirmed?
         # create client id
         @client_id = SecureRandom.urlsafe_base64(nil, false)
         @token     = SecureRandom.urlsafe_base64(nil, false)

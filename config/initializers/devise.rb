@@ -142,7 +142,7 @@ Devise.setup do |config|
   # Email regex used to validate email formats. It simply asserts that
   # one (and only one) @ exists in the given string. This is mainly
   # to give user feedback and not to assert the e-mail validity.
-  # config.email_regexp = /\A[^@]+@[^@]+\z/
+  config.email_regexp = /\A[^@\s]+@([^@\s]+\.)+[^@\W]+\z/
 
   # ==> Configuration for :timeoutable
   # The time you want to timeout the user session without activity. After this
@@ -193,11 +193,4 @@ Devise.setup do |config|
 
   # don't serialize tokens
   Devise::Models::Authenticatable::BLACKLIST_FOR_SERIALIZATION << :tokens
-
-  # mounted routes will point to this
-  Rails.application.config.after_initialize do
-    if defined?(::OmniAuth)
-      ::OmniAuth::config.path_prefix = config.omniauth_path_prefix = DeviseTokenAuth.omniauth_prefix
-    end
-  end
 end
